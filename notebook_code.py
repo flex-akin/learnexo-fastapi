@@ -1,5 +1,4 @@
 import os, getpass
-import pandas as pd
 
 # Paste your OpenAI key (starts with sk-...)
 os.environ["OPENAI_API_KEY"] = getpass.getpass("Paste your OPENAI_API_KEY: ")
@@ -108,57 +107,6 @@ core_recs, _ = get_recommendations(student, df, topics)
 core_recs
 
 # ---- cell separator ----
-
-def get_llm_feedback_openai(rec, model=OPENAI_MODEL):
-    system_msg = (
-        "You write short motivational pep talks for students. "
-        "One sentence only. No introductions like 'Sure'. No definitions. "
-        "Be specific and encouraging."
-    )
-    user_msg = (
-        f"Student is struggling with {rec['recommend_for']}. "
-        f"Encourage them to review {rec['recommended_topic']} and say how that helps with {rec['recommend_for']}. "
-        "One sentence. Start with encouragement."
-    )
-
-    try:
-        r = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role":"system","content":system_msg},
-                {"role":"user","content":user_msg}
-            ],
-            temperature=0.7,
-            max_tokens=60,
-        )
-        text = r.choices[0].message.content.strip()
-        # Safety trims: keep it one sentence and remove quote wrappers if any
-        text = text.strip('"\'')
-
-        # If it echoed instructions for some reason, nudge a fallback
-        if "One sentence" in text or "encourage" in text.lower() and "review" not in text.lower():
-            text = "You've got this—reviewing " + rec['recommended_topic'] + \
-                   f" will sharpen the skills you need to conquer {rec['recommend_for']}!"
-        return text
-    except Exception as e:
-        # Fallback line if API fails
-        return f"(LLM error) Reviewing {rec['recommended_topic']} strengthens the building blocks for {rec['recommend_for']}—you can do it!"
-
-# ---- cell separator ----
-
-def add_llm_feedback(recommendations):
-    enriched = []
-    for rec in recommendations:
-        fb = get_llm_feedback_openai(rec)
-        enriched.append({**rec, "feedback": fb})
-    return enriched
-
-core_with_feedback = add_llm_feedback(core_recs)
-
-for r in core_with_feedback:
-    print(f"For improvement in {r['recommend_for']}, recommend: {r['recommended_topic']}")
-    print("Feedback:", r['feedback'])
-    print()
 
 # ---- cell separator ----
 
